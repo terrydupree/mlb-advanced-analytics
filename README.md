@@ -1,16 +1,26 @@
-# MLB Advanced Betting System
+# 🏟️ MLB Advanced Statistical Analysis System
 
-A comprehensive Python-based system for MLB betting analysis using advanced sabermetrics, real-time data integration, and sophisticated statistical modeling.
+A comprehensive Python-based system for analyzing MLB games using advanced statistics, sabermetrics, and predictive modeling. This system focuses on pure statistical analysis without odds or betting components.
 
-## 🚀 Features
+## 🎯 Core Features
 
-- **Real-time MLB Stats API Integration**: Live probable pitchers and game data
-- **Advanced Sabermetrics**: wOBA, BABIP, ISO, FIP calculations
-- **Pitcher vs Batter Analysis**: Head-to-head historical performance
-- **Expected Value Calculations**: Poisson distribution modeling
-- **Multi-source Data Integration**: Framework for FanGraphs, Baseball Reference, Statcast
-- **Secure API Key Management**: Google Apps Script Properties integration
-- **Google Sheets Backend**: Real-time data population and analysis
+### 📊 **Statistical Analysis**
+- **Advanced Sabermetrics**: wOBA, BABIP, ISO, FIP, xwOBA calculations
+- **Poisson Distribution Modeling**: Game outcome probabilities
+- **Win Probability Models**: Based on historical data and park factors
+- **Statistical Significance Testing**: Confidence intervals and p-values
+
+### 🔍 **Data Integration** 
+- **MLB Stats API**: Real-time game data and player statistics
+- **Multi-source Framework**: Ready for FanGraphs, Baseball Reference integration
+- **Park Factors**: Stadium-specific adjustments
+- **Historical Analysis**: Season and career trends
+
+### 📈 **Advanced Analytics**
+- **Pitcher vs Batter Analysis**: Head-to-head matchup statistics
+- **Team Performance Metrics**: Run scoring predictions
+- **Confidence Scoring**: Statistical reliability measures
+- **Trend Analysis**: Performance patterns over time
 
 ## 📋 Setup Steps
 

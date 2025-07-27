@@ -5,6 +5,9 @@ pandas>=2.0.0
 numpy>=1.24.0
 scipy>=1.10.0
 
+# Environment Variables
+python-dotenv>=1.0.0
+
 # Google Sheets Integration
 gspread>=6.0.0
 oauth2client>=4.1.3
