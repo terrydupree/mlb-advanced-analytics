@@ -1,0 +1,93 @@
+# MLB Advanced Betting System - Git Ignore File
+
+# Sensitive Files - NEVER commit these!
+credentials.json
+api_config.json
+*.key
+*.secret
+*.env
+
+# Environment Variables
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Cache
+.cache/
+*.cache
+
+# Temporary Files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Data Files (optional - uncomment if you don't want to track data)
+# *.csv
+# *.json
+# *.xlsx
+# data/
+
+# API Response Cache
+api_cache/
+cache/
+
+# Test Files
+test_*.py
+*_test.py
+
+# Personal Notes
+notes.txt
+todo.txt
+personal/

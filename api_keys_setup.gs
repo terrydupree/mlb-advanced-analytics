@@ -1,0 +1,38 @@
+/**
+ * Store ALL API keys in Script Properties (run once per key)
+ */
+function setApiKeys() {
+  PropertiesService.getScriptProperties().setProperties({
+    'APISPORTS_KEY': 'YOUR-APISPORTS-KEY',
+    'ODDSAPI_KEY': 'YOUR-ODDSAPI-KEY',
+    'SPORTRADAR_KEY': 'YOUR-SPORTRADAR-KEY'
+  });
+}
+
+/**
+ * Get a specific API key by name
+ * @param {string} keyName The property name (e.g., 'APISPORTS_KEY')
+ * @return {string} The API key value
+ */
+function getApiKey(keyName) {
+  return PropertiesService.getScriptProperties().getProperty(keyName);
+}
+
+/**
+ * Example usage in functions
+ */
+function exampleFetchOdds() {
+  var oddsApiKey = getApiKey('ODDSAPI_KEY');
+  var endpoint = 'https://api.the-odds-api.com/v4/sports/?apiKey=' + oddsApiKey;
+  // Use UrlFetchApp.fetch(endpoint) as needed
+}
+
+function exampleFetchSportradar() {
+  var sportradarKey = getApiKey('SPORTRADAR_KEY');
+  // Use sportradarKey in your API call
+}
+
+function exampleFetchApiSports() {
+  var apiSportsKey = getApiKey('APISPORTS_KEY');
+  // Use apiSportsKey in your API call
+}
