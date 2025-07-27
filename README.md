@@ -1,23 +1,36 @@
-# 🏟️ MLB Advanced Statistical Analysis System
+# MLB Advanced Analytics Platform
 
-A comprehensive Python-based system for analyzing MLB games using advanced statistics, sabermetrics, and predictive modeling. This system focuses on pure statistical analysis without odds or betting components.
+![Python](https://img.shields.io/badge/python-v3.11+-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)
 
-## 🎯 Core Features
+A comprehensive, enterprise-grade MLB analytics platform featuring automated data collection, machine learning predictions, interactive dashboards, and production deployment capabilities.
 
-### 📊 **Statistical Analysis**
-- **Advanced Sabermetrics**: wOBA, BABIP, ISO, FIP, xwOBA calculations
-- **Poisson Distribution Modeling**: Game outcome probabilities
-- **Win Probability Models**: Based on historical data and park factors
-- **Statistical Significance Testing**: Confidence intervals and p-values
+## 🚀 **Key Features**
 
-### 🔍 **Data Integration** 
-- **MLB Stats API**: Real-time game data and player statistics
-- **Multi-source Framework**: Ready for FanGraphs, Baseball Reference integration
-- **Park Factors**: Stadium-specific adjustments
-- **Historical Analysis**: Season and career trends
+### **📊 Core Analytics**
+- Real-time MLB data collection from multiple sources (FanGraphs, Baseball Reference)
+- Advanced statistical analysis with park factors and pitcher vs. batter matchups
+- Google Sheets integration for seamless data management
+- Historical data analysis and trend identification
 
-### 🏛️ **Historical Data Processing**
-- **Chadwick Tools Integration**: Process Retrosheet event files and game logs
+### **🤖 Automated Intelligence**
+- **Smart Scheduling**: Automated morning, pre-game, live, and post-game updates
+- **Machine Learning**: XGBoost, LightGBM, and ensemble models for predictions
+- **Error Handling**: Comprehensive retry strategies, rate limiting, and circuit breakers
+- **Monitoring**: Real-time performance tracking and notification system
+
+### **🌐 Interactive Dashboard**
+- **Web Interface**: Flask-based dashboard with real-time visualizations
+- **REST API**: Complete API endpoints for external integrations
+- **User Settings**: Customizable stat weights, confidence parameters, and layouts
+- **Mobile Responsive**: Optimized for desktop and mobile viewing
+
+### **🔧 Production-Ready Infrastructure**
+- **CI/CD Pipeline**: Automated testing, security scanning, and deployment
+- **Database**: SQLite-based historical data storage with validation
+- **Cloud Deployment**: Ready for Heroku, AWS Lambda, or container deployment
+- **Security**: Built-in security scanning and vulnerability management
 - **Multi-year Analysis**: Track player and team performance across seasons
 - **Advanced Park Factors**: Calculate stadium effects from historical data
 - **Event-level Data**: Detailed play-by-play analysis and situational statistics

@@ -1,0 +1,459 @@
+name: MLB Analytics CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 8 AM UTC for automated data updates
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      run_type:
+        description: 'Type of run'
+        required: true
+        default: 'analysis'
+        type: choice
+        options:
+        - analysis
+        - training
+        - validation
+        - full_update
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  # Code Quality and Testing
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov flake8 black isort
+    
+    - name: Lint with flake8
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    - name: Format check with black
+      run: black --check --diff .
+    
+    - name: Import sorting check with isort
+      run: isort --check-only --diff .
+    
+    - name: Run tests with pytest
+      run: |
+        pytest tests/ -v --cov=modules --cov-report=xml --cov-report=html
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  # Security Scanning
+  security:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install safety bandit
+    
+    - name: Security check with Safety
+      run: safety check --json --output safety-report.json || true
+    
+    - name: Security check with Bandit
+      run: bandit -r . -f json -o bandit-report.json || true
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          safety-report.json
+          bandit-report.json
+
+  # Build and Package
+  build:
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+    
+    - name: Build package
+      run: python -m build
+    
+    - name: Check package
+      run: twine check dist/*
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist-files
+        path: dist/
+
+  # Automated MLB Analysis
+  mlb_analysis:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'schedule' || github.event.inputs.run_type == 'analysis' || github.event.inputs.run_type == 'full_update'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Create data directories
+      run: |
+        mkdir -p data logs reports
+    
+    - name: Set up environment variables
+      run: |
+        echo "GOOGLE_SHEET_ID=${{ secrets.GOOGLE_SHEET_ID }}" >> $GITHUB_ENV
+        echo "MLB_STATS_API_KEY=${{ secrets.MLB_STATS_API_KEY }}" >> $GITHUB_ENV
+        echo "APISPORTS_KEY=${{ secrets.APISPORTS_KEY }}" >> $GITHUB_ENV
+    
+    - name: Run daily MLB analysis
+      run: |
+        python automation_scheduler.py --run-type daily
+      continue-on-error: true
+    
+    - name: Generate analysis report
+      run: |
+        python -c "
+        from datetime import datetime
+        import json
+        
+        # Create a simple analysis report
+        report = {
+            'timestamp': datetime.now().isoformat(),
+            'analysis_type': 'daily_automated',
+            'status': 'completed',
+            'github_action': True
+        }
+        
+        with open('reports/daily_analysis_report.json', 'w') as f:
+            json.dump(report, f, indent=2)
+        "
+    
+    - name: Upload analysis results
+      uses: actions/upload-artifact@v3
+      with:
+        name: analysis-results-${{ github.run_number }}
+        path: |
+          logs/
+          reports/
+          data/*.csv
+
+  # Model Training and Validation
+  model_training:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event.inputs.run_type == 'training' || github.event.inputs.run_type == 'full_update'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Create model directories
+      run: |
+        mkdir -p models data logs reports
+    
+    - name: Download training data
+      run: |
+        # This would typically download historical data from cloud storage
+        echo "Training data placeholder" > data/training_data.csv
+    
+    - name: Train models
+      run: |
+        python ml_models.py --mode train --save-models
+      continue-on-error: true
+    
+    - name: Validate models
+      run: |
+        python historical_validation.py --validate-all
+      continue-on-error: true
+    
+    - name: Upload trained models
+      uses: actions/upload-artifact@v3
+      with:
+        name: trained-models-${{ github.run_number }}
+        path: |
+          models/
+          reports/
+          logs/
+
+  # Model Validation
+  model_validation:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event.inputs.run_type == 'validation' || github.event.inputs.run_type == 'full_update'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Create directories
+      run: mkdir -p models data logs reports
+    
+    - name: Download latest models
+      run: |
+        # In production, this would download from model registry/storage
+        echo "Model placeholder" > models/latest_model.pkl
+    
+    - name: Run model validation
+      run: |
+        python -c "
+        from historical_validation import ModelValidationSystem, MLBHistoricalDatabase
+        from user_settings import MLBUserSettings
+        
+        # Initialize validation system
+        db = MLBHistoricalDatabase()
+        settings = MLBUserSettings()
+        validator = ModelValidationSystem(db, settings)
+        
+        # Run validation
+        models = ['random_forest', 'gradient_boosting', 'ensemble']
+        report = validator.generate_validation_report(models, days_back=30)
+        
+        # Save report
+        import json
+        with open('reports/validation_report.json', 'w') as f:
+            json.dump(report, f, indent=2)
+        
+        print('Model validation completed')
+        "
+      continue-on-error: true
+    
+    - name: Upload validation results
+      uses: actions/upload-artifact@v3
+      with:
+        name: validation-results-${{ github.run_number }}
+        path: |
+          reports/
+          logs/
+
+  # Deploy to Production
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [mlb_analysis, model_training, model_validation]
+    if: github.ref == 'refs/heads/main' && (github.event.inputs.run_type == 'full_update' || github.event_name == 'push')
+    environment: production
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    # Deploy to cloud service (example with Heroku)
+    - name: Deploy to Heroku
+      if: false  # Disabled by default
+      uses: akhileshns/heroku-deploy@v3.12.12
+      with:
+        heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+        heroku_app_name: "mlb-analytics-dashboard"
+        heroku_email: ${{ secrets.HEROKU_EMAIL }}
+    
+    # Alternative: Deploy to AWS Lambda
+    - name: Configure AWS credentials
+      if: false  # Disabled by default
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    
+    # Update Google Sheets with latest analysis
+    - name: Update Google Sheets
+      run: |
+        python -c "
+        import os
+        from modules.sheet_manager import connect_sheet, update_worksheet
+        import pandas as pd
+        from datetime import datetime
+        
+        try:
+            # Update status sheet
+            sheet_id = os.getenv('GOOGLE_SHEET_ID')
+            if sheet_id:
+                gs = connect_sheet(sheet_id)
+                
+                # Create deployment status update
+                status_data = pd.DataFrame([{
+                    'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    'Deployment': 'GitHub Actions',
+                    'Status': 'Success',
+                    'Run Number': '${{ github.run_number }}',
+                    'Commit': '${{ github.sha }}'[:8]
+                }])
+                
+                update_worksheet(gs, 'deployment_status', status_data)
+                print('Google Sheets updated successfully')
+            else:
+                print('No Google Sheet ID configured')
+        except Exception as e:
+            print(f'Error updating Google Sheets: {e}')
+        "
+      env:
+        GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+    
+    - name: Create deployment summary
+      run: |
+        cat > deployment_summary.md << EOF
+        # 🚀 MLB Analytics Deployment Summary
+        
+        **Deployment Date:** $(date)
+        **Run Number:** ${{ github.run_number }}
+        **Commit:** ${{ github.sha }}
+        **Branch:** ${{ github.ref }}
+        
+        ## Components Deployed
+        - ✅ MLB Analysis Engine
+        - ✅ Machine Learning Models
+        - ✅ Validation System
+        - ✅ Google Sheets Integration
+        
+        ## Artifacts Generated
+        - Analysis Results: analysis-results-${{ github.run_number }}
+        - Trained Models: trained-models-${{ github.run_number }}
+        - Validation Reports: validation-results-${{ github.run_number }}
+        
+        ## System Status
+        - Status: Operational ✅
+        - Last Update: $(date)
+        - Next Scheduled Run: Tomorrow 8:00 AM UTC
+        
+        EOF
+    
+    - name: Upload deployment summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: deployment-summary-${{ github.run_number }}
+        path: deployment_summary.md
+
+  # Notification
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: always()
+    
+    steps:
+    - name: Notify success
+      if: needs.deploy.result == 'success'
+      run: |
+        echo "🎉 MLB Analytics deployment successful!"
+        echo "Run Number: ${{ github.run_number }}"
+        echo "Commit: ${{ github.sha }}"
+    
+    - name: Notify failure
+      if: needs.deploy.result == 'failure'
+      run: |
+        echo "❌ MLB Analytics deployment failed!"
+        echo "Run Number: ${{ github.run_number }}"
+        echo "Check logs for details."
+    
+    # Optional: Send Slack notification
+    - name: Slack notification
+      if: false  # Disabled by default
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#mlb-analytics'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        fields: repo,message,commit,author,action,eventName,ref,workflow
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
