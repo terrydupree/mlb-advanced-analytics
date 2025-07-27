@@ -16,11 +16,11 @@ A comprehensive Python-based system for analyzing MLB games using advanced stati
 - **Park Factors**: Stadium-specific adjustments
 - **Historical Analysis**: Season and career trends
 
-### 📈 **Advanced Analytics**
-- **Pitcher vs Batter Analysis**: Head-to-head matchup statistics
-- **Team Performance Metrics**: Run scoring predictions
-- **Confidence Scoring**: Statistical reliability measures
-- **Trend Analysis**: Performance patterns over time
+### 🏛️ **Historical Data Processing**
+- **Chadwick Tools Integration**: Process Retrosheet event files and game logs
+- **Multi-year Analysis**: Track player and team performance across seasons
+- **Advanced Park Factors**: Calculate stadium effects from historical data
+- **Event-level Data**: Detailed play-by-play analysis and situational statistics
 
 ## 📋 Setup Steps
 

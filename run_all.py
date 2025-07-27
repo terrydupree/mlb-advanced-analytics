@@ -14,6 +14,7 @@ def main():
     gs = connect_sheet(sheet_id)
 
     print("📊 Starting MLB Statistical Analysis System...")
+    print("💡 Enhanced with Chadwick Tools for historical data processing")
     
     games = get_games_today()
     # odds = get_odds()  # Odds disabled - focusing on pure analytics
@@ -24,6 +25,14 @@ def main():
     
     print("📋 Updating Google Sheets with analysis...")
     update_sheets(gs, analysis)
+    
+    print("\n🎯 Advanced Features Available:")
+    print("   📊 Chadwick Tools integration: python chadwick_integration.py")
+    print("   📈 Enhanced data processing: python enhanced_data_processing.py")
+    print("   🔍 Historical analysis with Retrosheet data")
+    print("   📋 Multi-year statistical trends")
+    
+    print("\n✅ Analysis complete! Check your Google Sheet for results.")
 
 if __name__ == "__main__":
     main()
